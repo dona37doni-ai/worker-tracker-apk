@@ -1,0 +1,8 @@
+{
+  "appId": "com.workertracker.app",
+  "appName": "دفتر الأجرة",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
