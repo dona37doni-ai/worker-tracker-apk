@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>دفتر الأجرة والمصاريف</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دفتر الأجرة">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f6f4f">
+<style>
+:root{
+  --bg:#f5f5f3;--card:#ffffff;--text:#1c1c1c;--muted:#6b6b6b;--border:#e3e3e0;
+  --primary:#2f6f4f;--primary-c:#ffffff;--danger:#c0392b;--worked:#2f6f4f;
+  --restbg:#dadad7;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#131313;--card:#1e1e1e;--text:#eaeaea;--muted:#9a9a9a;--border:#333;--primary:#4caf7d;--primary-c:#0b0b0b;--danger:#e57373;--worked:#4caf7d;--restbg:#2a2a2a;}
+}
+:root[data-theme="dark"]{--bg:#131313;--card:#1e1e1e;--text:#eaeaea;--muted:#9a9a9a;--border:#333;--primary:#4caf7d;--primary-c:#0b0b0b;--danger:#e57373;--worked:#4caf7d;--restbg:#2a2a2a;}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Tahoma,Arial,sans-serif;height:100%;}
+header{padding:14px 16px 10px;display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);z-index:5;}
+header .ic{color:var(--primary);flex-shrink:0;}
+header h1{margin:0;font-size:1.1rem;}
+header p{margin:1px 0 0;color:var(--muted);font-size:.78rem;}
+main{padding:6px 12px 90px;max-width:640px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.card h2{margin:0 0 10px;font-size:.95rem;}
+input,select{width:100%;padding:10px;margin-bottom:8px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:.95rem;}
+label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:2px;}
+.row{display:flex;gap:8px;}
+.row>*{flex:1;}
+button{cursor:pointer;border:none;border-radius:10px;padding:10px 14px;font-size:.9rem;background:var(--primary);color:var(--primary-c);font-weight:600;}
+button.secondary{background:var(--restbg);color:var(--text);font-weight:500;}
+button.danger{background:var(--danger);color:#fff;}
+button.small{padding:6px 10px;font-size:.8rem;border-radius:8px;}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.toolbar button{white-space:nowrap;}
+.toolbar select{flex:1;min-width:140px;margin-bottom:0;}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border);gap:8px;}
+.item:last-child{border-bottom:none;}
+.item .info b{display:block;}
+.item .info span{color:var(--muted);font-size:.8rem;}
+.item .acts{display:flex;gap:6px;flex-shrink:0;}
+.empty{color:var(--muted);text-align:center;padding:14px 0;font-size:.88rem;}
+.emptyCard{text-align:center;padding:30px 16px;}
+.emptyCard svg{margin-bottom:8px;}
+.emptyCard p{color:var(--muted);margin:6px 0 14px;font-size:.9rem;}
+.monthNav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.monthNav button{background:var(--restbg);color:var(--text);padding:6px 14px;}
+.monthNav span{font-weight:700;}
+.workerInfo{color:var(--muted);font-size:.78rem;margin-bottom:10px;}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.calGrid .wd{color:var(--muted);font-size:.7rem;padding:4px 0;}
+.day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;background:var(--bg);border:1px solid var(--border);}
+.day.normal{cursor:pointer;}
+.day.worked{background:var(--worked);color:#fff;font-weight:700;cursor:pointer;border-color:var(--worked);}
+.day.rest{background:var(--restbg);color:var(--muted);border-color:var(--restbg);}
+.day.before{background:var(--restbg);color:var(--muted);opacity:.55;border-color:var(--restbg);}
+.day.future{color:var(--muted);opacity:.55;border-style:dashed;}
+.day.empty{background:transparent;border:none;}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:.7rem;color:var(--muted);}
+.legend span{display:flex;align-items:center;gap:4px;}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+.summary{display:flex;justify-content:space-between;padding:6px 0;font-size:.9rem;align-items:center;}
+.summary b{font-size:1rem;}
+.total{border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-weight:700;}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);z-index:10;}
+nav.tabs button{flex:1;background:transparent;color:var(--muted);border-radius:0;padding:8px 2px 6px;font-size:.68rem;display:flex;flex-direction:column;align-items:center;gap:2px;}
+nav.tabs button .ic{font-size:1.15rem;}
+nav.tabs button.active{color:var(--primary);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:20;}
+.overlay.show{display:flex;}
+.modalBox{background:var(--card);border-radius:16px 16px 0 0;padding:18px;width:100%;max-width:640px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+.modalBox h3{margin:0 0 12px;}
+</style>
+</head>
+<body>
+<main style="padding-top:14px;">
+
+<div class="card emptyCard" id="emptyState" style="display:none">
+  <svg width="120" height="96" viewBox="0 0 200 160" fill="none">
+    <ellipse cx="100" cy="148" rx="66" ry="8" fill="var(--restbg)"/>
+    <rect x="52" y="58" width="96" height="72" rx="10" fill="var(--bg)" stroke="var(--primary)" stroke-width="3"/>
+    <path d="M64 84h72M64 100h50M64 116h60" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+    <circle cx="100" cy="34" r="20" fill="var(--card)" stroke="var(--primary)" stroke-width="3"/>
+    <text x="100" y="41" font-size="18" text-anchor="middle" fill="var(--primary)" font-family="Arial">+</text>
+  </svg>
+  <h2>ماكاينش عمال بعد</h2>
+  <p>زيد أول عامل باش تبدا تتبع الأجرة والمصاريف ديالو</p>
+  <button id="emptyAddBtn">➕ أضف أول عامل</button>
+</div>
+
+<div id="appBody" style="display:none">
+  <div class="toolbar">
+    <button id="addWorkerBtn" class="small">➕ عامل</button>
+    <button id="delWorkerBtn" class="small danger">🗑️ حذف</button>
+    <button id="editWorkerBtn" class="small secondary">✏️ تعديل</button><button id="backupBtn" class="small secondary">⬇️ نسخة</button><button id="restoreBtn" class="small secondary">⬆️ استرجاع</button><button id="exportBtn" class="small secondary">📄 CSV</button><input id="restoreFile" type="file" accept="application/json,.json" hidden>
+    <select id="workerSel"></select>
+  </div>
+
+  <div class="card" id="workerFormCard" style="display:none">
+    <h2 id="wfTitle">إضافة عامل</h2>
+    <form id="workerForm">
+      <label>اسم العامل</label><input id="wName" required>
+      <label>الأجرة اليومية الافتراضية (درهم)</label><input id="wWage" type="number" min="0" required>
+      <label>تاريخ الدخول</label><input id="wHire" type="date" required>
+      <div class="row"><button type="submit">💾 حفظ</button><button type="button" class="secondary" id="wfCancel">إلغاء</button></div>
+    </form>
+  </div>
+
+  <section class="panel active" id="tab-calendar">
+    <div class="card">
+      <div class="monthNav">
+        <button id="calPrev">‹ السابق</button>
+        <span id="calLabel"></span>
+        <button id="calNext">التالي ›</button>
+      </div>
+      <div class="workerInfo" id="calWorkerInfo"></div>
+      <div class="calGrid" id="calGrid"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--worked)"></i>خدم</span>
+        <span><i class="dot" style="background:var(--restbg)"></i>راحة/قبل التوظيف</span>
+        <span><i class="dot" style="border:1px dashed var(--border)"></i>ماجاش بعد</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-expenses">
+    <div class="card">
+      <h2>تسجيل مصروف</h2>
+      <label>التاريخ</label><input id="expDate" type="date">
+      <label>المبلغ (درهم)</label><input id="expAmount" type="number" min="0">
+      <label>السبب</label><input id="expNote" placeholder="مثلا: ليصانص، كيران...">
+      <button id="expAddBtn">➕ تسجيل المصروف</button>
+    </div>
+    <div class="card"><h2>💰 المصاريف المسجلة</h2><div id="expList"></div></div>
+  </section>
+
+  <section class="panel" id="tab-payments">
+    <div class="card"><h2>💵 وضعية الحساب</h2><div id="payTotals"></div></div>
+    <div class="card">
+      <h2>تسجيل دفعة</h2>
+      <label>التاريخ</label><input id="payDate" type="date">
+      <label>المبلغ المدفوع (درهم)</label><input id="payAmount" type="number" min="0">
+      <button id="payAddBtn">➕ تسجيل الدفعة</button>
+    </div>
+    <div class="card"><h2>الدفعات السابقة</h2><div id="payList"></div></div>
+  </section>
+
+  <section class="panel" id="tab-report">
+    <div class="card">
+      <div class="monthNav">
+        <button id="repPrev">‹ السابق</button>
+        <span id="repLabel"></span>
+        <button id="repNext">التالي ›</button>
+      </div>
+      <div id="repSummary"></div>
+    </div>
+    <div class="card"><h2>📊 تفاصيل الأيام</h2><div id="repDays"></div></div>
+  </section>
+</div>
+</main>
+
+<nav class="tabs" id="bottomNav" style="display:none">
+  <button data-tab="calendar" class="active"><span class="ic">📅</span>التقويم</button>
+  <button data-tab="expenses"><span class="ic">💰</span>المصاريف</button>
+  <button data-tab="payments"><span class="ic">💵</span>المدفوعات</button>
+  <button data-tab="report"><span class="ic">📊</span>التقرير</button>
+</nav>
+
+<div class="overlay" id="dayOverlay">
+  <div class="modalBox">
+    <h3 id="modalTitle">تعليم يوم</h3>
+    <label>الأجرة ليوم (درهم)</label>
+    <input id="modalWage" type="number" min="0">
+    <label>مصروف إضافي (اختياري)</label>
+    <input id="modalExpense" type="number" min="0" placeholder="0">
+    <label>سبب المصروف</label>
+    <input id="modalExpenseNote" placeholder="مثلا: ليصانص">
+    <div class="row">
+      <button id="modalSave">💾 حفظ</button>
+      <button class="secondary" id="modalCancel">إلغاء</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="danger" id="modalUnmark" style="display:none;width:100%">إلغاء تعليم اليوم</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='worker_tracker_v2';
+const OLD_KEY='worker_tracker_v1';
+const VERSION=2;
+const MONTHS=['يناير','فبراير','مارس','أبريل','ماي','يونيو','يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
+const WD=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+let data={version:VERSION,workers:[],work:{},expenses:[],payments:[]};
+try{const raw=localStorage.getItem(KEY);const old=localStorage.getItem(OLD_KEY);if(raw)data=Object.assign(data,JSON.parse(raw));else if(old){data=Object.assign(data,JSON.parse(old),{version:VERSION});localStorage.setItem(KEY,JSON.stringify(data));}}catch(e){}
+function normalize(){data.workers=Array.isArray(data.workers)?data.workers:[];data.expenses=Array.isArray(data.expenses)?data.expenses:[];data.payments=Array.isArray(data.payments)?data.payments:[];data.work=data.work&&typeof data.work==='object'?data.work:{};data.workers.forEach(w=>{w.id=String(w.id);w.name=String(w.name||'');w.wage=Number(w.wage)||0;});data.expenses.forEach(x=>x.amount=Number(x.amount)||0);data.payments.forEach(x=>x.amount=Number(x.amount)||0);}
+normalize();
+function save(){try{data.version=VERSION;localStorage.setItem(KEY,JSON.stringify(data));return true;}catch(e){alert('تعذر حفظ البيانات.');return false;}}
+function downloadBlob(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+function backup(){save();downloadBlob('worker-tracker-backup-'+todayStr()+'.json',JSON.stringify(data,null,2),'application/json');}
+function restoreFrom(obj){if(!obj||!Array.isArray(obj.workers)||!obj.work||!Array.isArray(obj.expenses)||!Array.isArray(obj.payments))throw new Error('invalid');data=Object.assign({version:VERSION},obj,{version:VERSION});normalize();currentWid=data.workers[0]?.id||null;save();refreshApp();alert('تم استرجاع النسخة بنجاح.');}
+function csvCell(v){return '"'+String(v??'').replaceAll('"','""')+'"';}
+function exportWorkerCSV(){const w=currentWorker();if(!w)return;const rows=[['التاريخ','النوع','المبلغ','التفاصيل']];Object.entries(data.work).filter(([k])=>k.startsWith(w.id+'|')).forEach(([k,v])=>rows.push([k.split('|')[1],'أجرة',v.wage,'يوم عمل']));data.expenses.filter(x=>x.wid===w.id).forEach(x=>rows.push([x.date,'مصروف',x.amount,x.note||'']));data.payments.filter(x=>x.wid===w.id).forEach(x=>rows.push([x.date,'دفعة',x.amount,'']));const csv='\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\n');downloadBlob('worker-'+w.name.replace(/[^\w\u0600-\u06FF-]+/g,'_')+'.csv',csv,'text/csv;charset=utf-8');}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function fmt(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function todayStr(){return fmt(new Date());}
+function dhs(n){return Number(n||0).toLocaleString('en-US')+' د.م.';}
+
+let currentWid=data.workers[0]?data.workers[0].id:null;
+let editingWorker=null; // 'add' | worker object | null
+let calY=new Date().getFullYear(), calM=new Date().getMonth();
+let repY=calY, repM=calM;
+let modalDate=null;
+
+function currentWorker(){return data.workers.find(w=>w.id===currentWid);}
+
+function refreshApp(){
+  const has=data.workers.length>0;
+  document.getElementById('emptyState').style.display=has?'none':'flex';
+  document.getElementById('appBody').style.display=has?'block':'none';
+  document.getElementById('bottomNav').style.display=has?'flex':'none';
+  if(has){
+    if(!currentWorker())currentWid=data.workers[0].id;
+    fillWorkerSelect();
+    renderActiveTab();
+  }
+}
+function fillWorkerSelect(){
+  const sel=document.getElementById('workerSel');
+  sel.innerHTML=data.workers.map(w=>`<option value="${w.id}">${w.name} — ${dhs(w.wage)}</option>`).join('');
+  sel.value=currentWid;
+}
+document.getElementById('workerSel').addEventListener('change',e=>{currentWid=e.target.value;renderActiveTab();});
+
+// ---------- TABS ----------
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+let activeTab='calendar';
+function switchTab(t){
+  activeTab=t;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelector('nav.tabs button[data-tab="'+t+'"]').classList.add('active');
+  renderActiveTab();
+}
+function renderActiveTab(){
+  if(activeTab==='calendar')renderCalendar();
+  if(activeTab==='expenses')renderExpenses();
+  if(activeTab==='payments')renderPayments();
+  if(activeTab==='report')renderReport();
+}
+
+// ---------- WORKER ADD/EDIT/DELETE ----------
+document.getElementById('emptyAddBtn').addEventListener('click',()=>openWorkerForm('add'));
+document.getElementById('addWorkerBtn').addEventListener('click',()=>openWorkerForm('add'));
+document.getElementById('editWorkerBtn').addEventListener('click',()=>{if(currentWorker())openWorkerForm('edit');});
+document.getElementById('delWorkerBtn').addEventListener('click',()=>{
+  const w=currentWorker();if(!w)return;
+  if(!confirm('واخا تحذف "'+w.name+'"؟ غادي تتحذف معه جميع الأيام والمصاريف والدفعات ديالو.'))return;
+  data.workers=data.workers.filter(x=>x.id!==w.id);
+  Object.keys(data.work).forEach(k=>{if(k.startsWith(w.id+'|'))delete data.work[k];});
+  data.expenses=data.expenses.filter(x=>x.wid!==w.id);
+  data.payments=data.payments.filter(x=>x.wid!==w.id);
+  currentWid=data.workers[0]?data.workers[0].id:null;
+  save();refreshApp();
+});
+function openWorkerForm(mode){
+  document.getElementById('appBody').style.display='block';
+  document.getElementById('emptyState').style.display='none';
+  const card=document.getElementById('workerFormCard');
+  card.style.display='block';
+  if(mode==='edit'){
+    const w=currentWorker();
+    editingWorker=w.id;
+    document.getElementById('wfTitle').textContent='تعديل عامل: '+w.name;
+    document.getElementById('wName').value=w.name;
+    document.getElementById('wWage').value=w.wage;
+    document.getElementById('wHire').value=w.hireDate;
+  }else{
+    editingWorker='add';
+    document.getElementById('wfTitle').textContent='إضافة عامل';
+    document.getElementById('workerForm').reset();
+  }
+  card.scrollIntoView({behavior:'smooth'});
+}
+document.getElementById('wfCancel').addEventListener('click',()=>{
+  document.getElementById('workerFormCard').style.display='none';
+  editingWorker=null;
+  if(!data.workers.length){refreshApp();}
+});
+document.getElementById('workerForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('wName').value.trim();
+  const wage=Number(document.getElementById('wWage').value);
+  const hireDate=document.getElementById('wHire').value;
+  if(!name||!hireDate)return;
+  if(editingWorker==='add'){
+    const w={id:uid(),name,wage,hireDate};
+    data.workers.push(w);currentWid=w.id;
+  }else{
+    const w=data.workers.find(x=>x.id===editingWorker);
+    w.name=name;w.wage=wage;w.hireDate=hireDate;
+  }
+  editingWorker=null;
+  document.getElementById('workerFormCard').style.display='none';
+  save();refreshApp();
+});
+
+// ---------- CALENDAR ----------
+document.getElementById('calPrev').addEventListener('click',()=>{calM--;if(calM<0){calM=11;calY--;}renderCalendar();});
+document.getElementById('calNext').addEventListener('click',()=>{calM++;if(calM>11){calM=0;calY++;}renderCalendar();});
+function renderCalendar(){
+  const w=currentWorker();if(!w)return;
+  document.getElementById('calLabel').textContent=MONTHS[calM]+' '+calY;
+  document.getElementById('calWorkerInfo').textContent='الأجرة اليومية: '+dhs(w.wage)+' — تاريخ الدخول: '+w.hireDate;
+  const grid=document.getElementById('calGrid');
+  const today=todayStr();
+  const first=new Date(calY,calM,1).getDay();
+  const nDays=new Date(calY,calM+1,0).getDate();
+  let html=WD.map(d=>`<div class="wd">${d}</div>`).join('');
+  for(let i=0;i<first;i++)html+='<div class="day empty"></div>';
+  for(let d=1;d<=nDays;d++){
+    const date=new Date(calY,calM,d);
+    const ds=fmt(date);
+    const isSun=date.getDay()===0;
+    const before=ds<w.hireDate;
+    const future=ds>today;
+    const entry=data.work[w.id+'|'+ds];
+    let cls='day',label=d;
+    if(before||isSun)cls+=' rest';
+    else if(future)cls+=' future';
+    else if(entry){cls+=' worked';}
+    else cls+=' normal';
+    const clickable=!before&&!isSun&&!future;
+    html+=`<div class="${cls}" ${clickable?`onclick="dayClick('${ds}')"`:''}>${label}</div>`;
+  }
+  grid.innerHTML=html;
+}
+function dayClick(ds){
+  const w=currentWorker();if(!w)return;
+  const entry=data.work[w.id+'|'+ds];
+  if(!entry){
+    data.work[w.id+'|'+ds]={wage:w.wage};
+    save();renderCalendar();
+  }else{
+    openDayModal(ds);
+  }
+}
+function openDayModal(ds){
+  const w=currentWorker();if(!w)return;
+  modalDate=ds;
+  const entry=data.work[w.id+'|'+ds];
+  document.getElementById('modalTitle').textContent='يوم '+ds;
+  document.getElementById('modalWage').value=entry?entry.wage:w.wage;
+  document.getElementById('modalExpense').value='';
+  document.getElementById('modalExpenseNote').value='';
+  document.getElementById('modalUnmark').style.display=entry?'block':'none';
+  document.getElementById('dayOverlay').classList.add('show');
+}
+document.getElementById('modalCancel').addEventListener('click',()=>document.getElementById('dayOverlay').classList.remove('show'));
+document.getElementById('modalSave').addEventListener('click',()=>{
+  const w=currentWorker();if(!w)return;
+  const wage=Number(document.getElementById('modalWage').value)||0;
+  data.work[w.id+'|'+modalDate]={wage};
+  const exp=Number(document.getElementById('modalExpense').value)||0;
+  if(exp>0)data.expenses.push({id:uid(),wid:w.id,date:modalDate,amount:exp,note:document.getElementById('modalExpenseNote').value.trim()||'مصروف يوم العمل'});
+  save();document.getElementById('dayOverlay').classList.remove('show');renderCalendar();
+});
+document.getElementById('modalUnmark').addEventListener('click',()=>{
+  const w=currentWorker();if(!w)return;
+  delete data.work[w.id+'|'+modalDate];
+  save();document.getElementById('dayOverlay').classList.remove('show');renderCalendar();
+});
+
+// ---------- EXPENSES ----------
+document.getElementById('expDate').value=todayStr();
+document.getElementById('expAddBtn').addEventListener('click',()=>{
+  const w=currentWorker();if(!w)return;
+  const date=document.getElementById('expDate').value||todayStr();
+  const amount=Number(document.getElementById('expAmount').value)||0;
+  const note=document.getElementById('expNote').value.trim();
+  if(amount<=0)return;
+  data.expenses.push({id:uid(),wid:w.id,date,amount,note});
+  save();document.getElementById('expAmount').value='';document.getElementById('expNote').value='';
+  renderExpenses();
+});
+function renderExpenses(){
+  const w=currentWorker();if(!w)return;
+  const list=document.getElementById('expList');
+  const items=data.expenses.filter(x=>x.wid===w.id).sort((a,b)=>b.date.localeCompare(a.date));
+  list.innerHTML=items.length?items.map(x=>`<div class="item"><div class="info"><b>${dhs(x.amount)}</b><span>${x.date} — ${x.note||''}</span></div>
+    <div class="acts"><button class="small secondary" onclick="editExpense('${x.id}')">✏️</button><button class="small danger" onclick="delExpense('${x.id}')">🗑️</button></div></div>`).join(''):'<div class="empty">ماكاينش مصاريف مسجلة</div>';
+}
+function editExpense(id){const x=data.expenses.find(v=>v.id===id);if(!x)return;const a=prompt('المبلغ:',x.amount);if(a===null)return;const n=Number(a);if(!(n>0))return alert('المبلغ غير صحيح');x.amount=n;x.note=prompt('السبب:',x.note||'')??x.note;save();renderExpenses();}
+function delExpense(id){if(!confirm('حذف المصروف؟'))return;data.expenses=data.expenses.filter(x=>x.id!==id);save();renderExpenses();}
+
+// ---------- PAYMENTS ----------
+document.getElementById('payDate').value=todayStr();
+document.getElementById('payAddBtn').addEventListener('click',()=>{
+  const w=currentWorker();if(!w)return;
+  const date=document.getElementById('payDate').value||todayStr();
+  const amount=Number(document.getElementById('payAmount').value)||0;
+  if(amount<=0)return;
+  data.payments.push({id:uid(),wid:w.id,date,amount});
+  save();document.getElementById('payAmount').value='';
+  renderPayments();
+});
+function totals(wid){
+  const wages=Object.entries(data.work).filter(([k])=>k.startsWith(wid+'|')).reduce((s,[,v])=>s+v.wage,0);
+  const exp=data.expenses.filter(x=>x.wid===wid).reduce((s,x)=>s+Number(x.amount),0);
+  const paid=data.payments.filter(x=>x.wid===wid).reduce((s,x)=>s+Number(x.amount),0);
+  return {wages,exp,paid,remaining:wages+exp-paid};
+}
+function renderPayments(){
+  const w=currentWorker();if(!w)return;
+  const t=totals(w.id);
+  document.getElementById('payTotals').innerHTML=`
+    <div class="summary"><span>💵 مجموع الأجرة المستحقة</span><b>${dhs(t.wages)}</b></div>
+    <div class="summary"><span>🧾 مصاريف غير مسترجعة</span><b>${dhs(t.exp)}</b></div>
+    <div class="summary"><span>✅ اللي تخلص</span><b>${dhs(t.paid)}</b></div>
+    <div class="summary total"><span>الباقي للعامل</span><b>${dhs(t.remaining)}</b></div>`;
+  const items=data.payments.filter(x=>x.wid===w.id).sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('payList').innerHTML=items.length?items.map(x=>`<div class="item"><div class="info"><b>${dhs(x.amount)}</b><span>${x.date}</span></div>
+    <div class="acts"><button class="small secondary" onclick="editPayment('${x.id}')">✏️</button><button class="small danger" onclick="delPayment('${x.id}')">🗑️</button></div></div>`).join(''):'<div class="empty">ماكاينش دفعات بعد</div>';
+}
+function editPayment(id){const x=data.payments.find(v=>v.id===id);if(!x)return;const a=prompt('المبلغ:',x.amount);if(a===null)return;const n=Number(a);if(!(n>0))return alert('المبلغ غير صحيح');x.amount=n;save();renderPayments();}
+function delPayment(id){if(!confirm('حذف الدفعة؟'))return;data.payments=data.payments.filter(x=>x.id!==id);save();renderPayments();}
+
+// ---------- REPORT ----------
+document.getElementById('repPrev').addEventListener('click',()=>{repM--;if(repM<0){repM=11;repY--;}renderReport();});
+document.getElementById('repNext').addEventListener('click',()=>{repM++;if(repM>11){repM=0;repY++;}renderReport();});
+function renderReport(){
+  const w=currentWorker();if(!w)return;
+  document.getElementById('repLabel').textContent=MONTHS[repM]+' '+repY;
+  const monthStr=repY+'-'+String(repM+1).padStart(2,'0');
+  const nDays=new Date(repY,repM+1,0).getDate();
+  let wageSum=0,rows='';
+  for(let d=1;d<=nDays;d++){
+    const date=new Date(repY,repM,d);const ds=fmt(date);
+    const isSun=date.getDay()===0;const before=ds<w.hireDate;
+    const entry=data.work[w.id+'|'+ds];
+    let status,cls='';
+    if(before){status='قبل التوظيف';cls='color:var(--muted)';}
+    else if(isSun){status='راحة';cls='color:var(--muted)';}
+    else if(entry){status='خدم — '+dhs(entry.wage);wageSum+=entry.wage;cls='color:var(--primary);font-weight:600';}
+    else status='ماخدمش';
+    rows+=`<div class="item"><span>${ds} (${WD[date.getDay()]})</span><span style="${cls}">${status}</span></div>`;
+  }
+  const expItems=data.expenses.filter(x=>x.wid===w.id&&x.date.startsWith(monthStr));
+  const expSum=expItems.reduce((s,x)=>s+Number(x.amount),0);
+  document.getElementById('repSummary').innerHTML=`
+    <div class="summary"><span>📅 مجموع الأجرة هاد الشهر</span><b>${dhs(wageSum)}</b></div>
+    <div class="summary"><span>🧾 مجموع المصاريف هاد الشهر</span><b>${dhs(expSum)}</b></div>
+    <div class="summary total"><span>المجموع الكلي</span><b>${dhs(wageSum+expSum)}</b></div>`;
+  document.getElementById('repDays').innerHTML=rows;
+}
+
+// ---------- BACKUP / RESTORE / EXPORT ----------
+document.getElementById('backupBtn').addEventListener('click',backup);document.getElementById('exportBtn').addEventListener('click',exportWorkerCSV);document.getElementById('restoreBtn').addEventListener('click',()=>document.getElementById('restoreFile').click());document.getElementById('restoreFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{restoreFrom(JSON.parse(await f.text()));}catch(err){alert('ملف النسخة غير صالح.');}e.target.value='';});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+// ---------- INIT ----------
+refreshApp();
+</script>
+</body>
+</html>
